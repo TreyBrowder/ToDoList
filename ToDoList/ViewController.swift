@@ -8,14 +8,18 @@
 import UIKit
 
 class ViewController: UIViewController {
-
+    
+    ///constant to access the persistent viewContext from the AppDelegate - Needed when working with CoreData
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
     }
-
+    
+// MARK: - Core Data Methods
+    
+    ///method to return list of all task
     func getAllTasks(name: String){
         do {
             let tasks = try context.fetch(ToDoListTask.fetchRequest())
@@ -27,6 +31,7 @@ class ViewController: UIViewController {
         
     }
     
+    ///method to create a task
     func createTask(name: String, dueDate: Date){
         let newTask = ToDoListTask(context: context)
         newTask.name = name
@@ -43,6 +48,7 @@ class ViewController: UIViewController {
         
     }
     
+    ///Method to delete a task
     func deleteTask(task: ToDoListTask) {
         context.delete(task)
         
@@ -54,6 +60,7 @@ class ViewController: UIViewController {
         }
     }
     
+    ///Method to make a change to a task
     func updateTask(task: ToDoListTask, newName: String, newDueDate: Date){
         task.name = newName
         task.dueByDate = newDueDate
