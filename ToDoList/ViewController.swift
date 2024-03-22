@@ -12,10 +12,27 @@ class ViewController: UIViewController {
     ///constant to access the persistent viewContext from the AppDelegate - Needed when working with CoreData
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
+    ///tableview needed to display task list
+    let tableView: UITableView = {
+        let table = UITableView()
+        table.register(UITableViewCell.self, forCellReuseIdentifier: "TaskCell")
+       
+        return table
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        
+        title = "TO DO LIST"
+        view.addSubview(tableView)
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.frame = view.bounds
+        
     }
+    
+    
     
 // MARK: - Core Data Methods
     
@@ -72,6 +89,23 @@ class ViewController: UIViewController {
             //handle error here
         }
     }
-
 }
 
+///Extension for the data source and delegate
+extension ViewController: UITableViewDataSource, UITableViewDelegate {
+
+//MARK: Data source methods
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        <#code#>
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        <#code#>
+    }
+    
+//MARK: Delegate methods
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        <#code#>
+    }
+}
