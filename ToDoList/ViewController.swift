@@ -12,10 +12,12 @@ class ViewController: UIViewController {
     ///constant to access the persistent viewContext from the AppDelegate - Needed when working with CoreData
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
+    private var tasksData = [ToDoListTask]()
+    
     ///tableview needed to display task list
     let tableView: UITableView = {
         let table = UITableView()
-        table.register(UITableViewCell.self, forCellReuseIdentifier: "TaskCell")
+        table.register(UITableViewCell.self, forCellReuseIdentifier: "taskCell")
        
         return table
     }()
@@ -39,7 +41,10 @@ class ViewController: UIViewController {
     ///method to return list of all task
     func getAllTasks(name: String){
         do {
-            let tasks = try context.fetch(ToDoListTask.fetchRequest())
+            tasksData = try context.fetch(ToDoListTask.fetchRequest())
+            DispatchQueue.main.async { [weak self] in
+                self?.tableView.reloadData()
+            }
         }
         catch {
             //error goes here
@@ -97,15 +102,21 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
 //MARK: Data source methods
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        <#code#>
+        return tasksData.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        <#code#>
+        let task = tasksData[indexPath.row]
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: "taskCell", for: indexPath)
+        
+        cell.textLabel?.text = task.name
+        
+        return cell
     }
     
 //MARK: Delegate methods
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        <#code#>
-    }
+//    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        //may not use this method
+//    }
 }
