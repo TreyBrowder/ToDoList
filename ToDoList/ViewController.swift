@@ -12,6 +12,8 @@ class ViewController: UIViewController {
     ///constant to access the persistent viewContext from the AppDelegate - Needed when working with CoreData
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
+    private var dueDateTextField: UITextField?
+    
     private var tasksData = [ToDoListTask]()
     
     ///tableview needed to display task list
@@ -32,8 +34,103 @@ class ViewController: UIViewController {
         tableView.delegate = self
         tableView.frame = view.bounds
         
+        //set up button to add a task to the UI
+        taskSetUp()
+        
     }
     
+    private func taskSetUp(){
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add,
+                                                            target: self,
+                                                            action: #selector(didTapAdd))
+    }
+    
+    @objc private func didTapAdd(){
+        let alert = UIAlertController(title: "New Task",
+                                      message: "Enter new task to do",
+                                      preferredStyle: .alert)
+        
+        //text field for the task name
+        alert.addTextField { taskName in
+            taskName.placeholder = "Name of task to do"
+        }
+        
+        //create a larger container to show date picker then add it to the subview
+        let containerView = UIView(frame: CGRect(x: 0, y: 0, width: (view.bounds.width)/4, height: (view.bounds.height)/4))
+        let datePicker = UIDatePicker(frame: CGRect(x: 0, y: 0, width: (view.bounds.width)/4, height: (view.bounds.height)/4))
+        datePicker.preferredDatePickerStyle = .wheels
+        datePicker.datePickerMode = .date
+        containerView.addSubview(datePicker)
+        //text field for the due date
+        alert.addTextField { [weak self] taskDueDate in
+            
+            guard let self = self else {
+                return
+            }
+            
+            self.dueDateTextField = taskDueDate
+            taskDueDate.placeholder = "MM/DD/YYYY"
+            taskDueDate.inputView = containerView
+            
+            let toolbar = UIToolbar()
+            toolbar.sizeToFit()
+            let doneButton = UIBarButtonItem(title: "Done",
+                                             style: .plain,
+                                             target: self,
+                                             action: #selector(self.dismissDatePicker))
+            toolbar.setItems([doneButton], animated: false)
+            taskDueDate.inputAccessoryView = toolbar
+        }
+        
+        alert.addAction(UIAlertAction(title: "Submit", style: .cancel, handler: { [weak self] _ in
+            guard let self = self else {
+                return
+            }
+            
+            guard let taskNameTextField = alert.textFields?.first, let text = taskNameTextField.text, !text.isEmpty else {
+                print("----- LOG -----")
+                print("Method: didTapAdd")
+                print("Error: text to add new task was empty")
+                return
+            }
+            
+            guard let taskDueDateField = alert.textFields?.last, let taskDueDateStr = taskDueDateField.text, !taskDueDateStr.isEmpty else {
+                print("----- LOG -----")
+                print("Method: didTapAdd")
+                print("Error: text to add new task due date was empty")
+                return
+            }
+            
+            //Convert the date string back to a date object to save in core data
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MM/DD/YYYY"
+            if let taskDueDate = dateFormatter.date(from: taskDueDateStr) {
+                self.createTask(name: text, dueDate: taskDueDate)
+            } else {
+                print("Invalid date format")
+            }
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(alert, animated: true)
+    }
+    
+    ///selector method when users taps done to dismiss the date picker
+    @objc private func dismissDatePicker(){
+        guard let alert = presentedViewController as? UIAlertController,
+              let taskDueDateField = alert.textFields?.last else {
+            return
+        }
+        
+        // Get the date picker from the containerView
+        if let containerView = taskDueDateField.inputView,
+           let datePicker = containerView.subviews.first as? UIDatePicker {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MM/dd/yyyy"
+            taskDueDateField.text = dateFormatter.string(from: datePicker.date)
+        }
+        
+        taskDueDateField.endEditing(true)
+    }
     
     
 // MARK: - Core Data Methods
@@ -66,6 +163,7 @@ class ViewController: UIViewController {
         }
         catch {
             //handle error here
+            print("Couldnt save created task")
         }
         
     }
@@ -79,6 +177,7 @@ class ViewController: UIViewController {
         }
         catch {
             //handle error
+            print("Couldnt delete task")
         }
     }
     
@@ -92,6 +191,7 @@ class ViewController: UIViewController {
         }
         catch {
             //handle error here
+            print("Couldn't update task")
         }
     }
 }
