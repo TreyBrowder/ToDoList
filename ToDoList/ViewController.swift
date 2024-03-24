@@ -212,32 +212,30 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
         return tasksData.count
     }
     
-    //still needs to be debugged
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 100
+    }
+    
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let task = tasksData[indexPath.row]
-        let cell = tableView.dequeueReusableCell(withIdentifier: "taskCell", for: indexPath)
+        let cell = TaskTableViewCell(style: .default, reuseIdentifier: "TaskCell")
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MM/dd/yyyy"
-        
-        cell.textLabel?.text = task.name
-       
-        if let createdDt = task.createdDate,
+
+        if let taskName = task.name,
+           let createdDt = task.createdDate,
            let dueByDt = task.dueByDate {
             let showCreatedDtStr = dateFormatter.string(from: createdDt)
             let showDueDtStr = dateFormatter.string(from: dueByDt)
             
-            print("Due: \(showDueDtStr)")
-            print("Created: \(showCreatedDtStr)")
-            cell.detailTextLabel?.text = "Created: \(showCreatedDtStr) \n Due: \(showDueDtStr)"
+            //set text for labels
+            cell.taskNameLabel.text = taskName
+            cell.createdDtLabel.text = "Created: \(showCreatedDtStr)"
+            cell.dueByDtLabel.text = "Due: \(showDueDtStr)"
         }
-        
-        
         return cell
-    }
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 100
     }
     
 //MARK: Delegate methods
@@ -255,7 +253,6 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
             guard let self = self else {
                 return
             }
-        //copy code from original alert ---- START*************
             
             let alert = UIAlertController(title: "Edit Task",
                                           message: "Edit your task",
@@ -325,8 +322,6 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
             }))
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
             self.present(alert, animated: true)
-            
-    // END COPY CODE FROM ORIGINAL ALERT *******
         }))
         editSheet.addAction(UIAlertAction(title: "Delete",
                                           style: .destructive,
