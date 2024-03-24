@@ -9,6 +9,8 @@ import UIKit
 
 class ViewController: UIViewController {
     
+    //used force unwrap just for simplicity purposes in an actual enterprise app this should be an optional and would need to be
+    //changed at the all of the call sights as well to match
     ///constant to access the persistent viewContext from the AppDelegate - Needed when working with CoreData
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
@@ -177,6 +179,7 @@ class ViewController: UIViewController {
         
         do {
             try context.save()
+            getAllTasks()
         }
         catch {
             //handle error
@@ -191,6 +194,7 @@ class ViewController: UIViewController {
         
         do {
             try context.save()
+            getAllTasks()
         }
         catch {
             //handle error here
@@ -208,18 +212,132 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
         return tasksData.count
     }
     
+    //still needs to be debugged
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let task = tasksData[indexPath.row]
-        
         let cell = tableView.dequeueReusableCell(withIdentifier: "taskCell", for: indexPath)
         
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM/dd/yyyy"
+        
         cell.textLabel?.text = task.name
+       
+        if let createdDt = task.createdDate,
+           let dueByDt = task.dueByDate {
+            let showCreatedDtStr = dateFormatter.string(from: createdDt)
+            let showDueDtStr = dateFormatter.string(from: dueByDt)
+            
+            print("Due: \(showDueDtStr)")
+            print("Created: \(showCreatedDtStr)")
+            cell.detailTextLabel?.text = "Created: \(showCreatedDtStr) \n Due: \(showDueDtStr)"
+        }
+        
         
         return cell
     }
     
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 100
+    }
+    
 //MARK: Delegate methods
-//    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        //may not use this method
-//    }
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let task = tasksData[indexPath.row]
+        
+        let editSheet = UIAlertController(title: "Edit",
+                                          message: nil,
+                                          preferredStyle: .actionSheet)
+        
+        editSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        editSheet.addAction(UIAlertAction(title: "Edit", style: .default, handler: { [weak self] _ in
+            //Edit functionality
+            guard let self = self else {
+                return
+            }
+        //copy code from original alert ---- START*************
+            
+            let alert = UIAlertController(title: "Edit Task",
+                                          message: "Edit your task",
+                                          preferredStyle: .alert)
+            
+            //text field for the task name
+            alert.addTextField { taskName in
+                taskName.placeholder = "Name of task to do"
+            }
+            //name of task should be prefilled in since youre editing the task
+            alert.textFields?.first?.text = task.name
+            //create a larger container to show date picker then add it to the subview
+            let containerView = UIView(frame: CGRect(x: 0, y: 0, width: (view.bounds.width)/4, height: (view.bounds.height)/4))
+            let datePicker = UIDatePicker(frame: CGRect(x: 0, y: 0, width: (view.bounds.width)/4, height: (view.bounds.height)/4))
+            datePicker.preferredDatePickerStyle = .wheels
+            datePicker.datePickerMode = .date
+            containerView.addSubview(datePicker)
+            
+            //text field for the due date
+            alert.addTextField { [weak self] taskDueDate in
+                
+                guard let self = self else {
+                    return
+                }
+                
+                self.dueDateTextField = taskDueDate
+                taskDueDate.placeholder = "MM/DD/YYYY"
+                taskDueDate.inputView = containerView
+                
+                let toolbar = UIToolbar()
+                toolbar.sizeToFit()
+                let doneButton = UIBarButtonItem(title: "Done",
+                                                 style: .plain,
+                                                 target: self,
+                                                 action: #selector(self.dismissDatePicker))
+                toolbar.setItems([doneButton], animated: false)
+                taskDueDate.inputAccessoryView = toolbar
+            }
+            
+            alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { [weak self] _ in
+                guard let self = self else {
+                    return
+                }
+                
+                guard let taskNameTextField = alert.textFields?.first, let newNametext = taskNameTextField.text, !newNametext.isEmpty else {
+                    print("----- LOG -----")
+                    print("Method: didTapAdd")
+                    print("Error: text to add new task was empty")
+                    return
+                }
+                
+                guard let taskDueDateField = alert.textFields?.last, let newTaskDueDateStr = taskDueDateField.text, !newTaskDueDateStr.isEmpty else {
+                    print("----- LOG -----")
+                    print("Method: didTapAdd")
+                    print("Error: text to add new task due date was empty")
+                    return
+                }
+                
+                //Convert the date string back to a date object to save in core data
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "MM/dd/yyyy"
+                if let taskDueDate = dateFormatter.date(from: newTaskDueDateStr) {
+                    self.updateTask(task: task, newName: newNametext, newDueDate: taskDueDate)
+                } else {
+                    print("Invalid date format")
+                }
+            }))
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+            self.present(alert, animated: true)
+            
+    // END COPY CODE FROM ORIGINAL ALERT *******
+        }))
+        editSheet.addAction(UIAlertAction(title: "Delete",
+                                          style: .destructive,
+                                          handler: {[weak self] _ in
+            //Delete functionality
+            guard let self = self else {
+                return
+            }
+            self.deleteTask(task: task)
+        }))
+        
+        present(editSheet, animated: true)
+    }
 }
