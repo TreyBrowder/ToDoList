@@ -30,6 +30,7 @@ class ViewController: UIViewController {
         
         title = "TO DO LIST"
         view.addSubview(tableView)
+        getAllTasks()
         tableView.dataSource = self
         tableView.delegate = self
         tableView.frame = view.bounds
@@ -61,6 +62,7 @@ class ViewController: UIViewController {
         datePicker.preferredDatePickerStyle = .wheels
         datePicker.datePickerMode = .date
         containerView.addSubview(datePicker)
+        
         //text field for the due date
         alert.addTextField { [weak self] taskDueDate in
             
@@ -82,7 +84,7 @@ class ViewController: UIViewController {
             taskDueDate.inputAccessoryView = toolbar
         }
         
-        alert.addAction(UIAlertAction(title: "Submit", style: .cancel, handler: { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "Submit", style: .default, handler: { [weak self] _ in
             guard let self = self else {
                 return
             }
@@ -103,7 +105,7 @@ class ViewController: UIViewController {
             
             //Convert the date string back to a date object to save in core data
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MM/DD/YYYY"
+            dateFormatter.dateFormat = "MM/dd/yyyy"
             if let taskDueDate = dateFormatter.date(from: taskDueDateStr) {
                 self.createTask(name: text, dueDate: taskDueDate)
             } else {
@@ -121,7 +123,7 @@ class ViewController: UIViewController {
             return
         }
         
-        // Get the date picker from the containerView
+        //Get the date picker from the containerView
         if let containerView = taskDueDateField.inputView,
            let datePicker = containerView.subviews.first as? UIDatePicker {
             let dateFormatter = DateFormatter()
@@ -136,7 +138,7 @@ class ViewController: UIViewController {
 // MARK: - Core Data Methods
     
     ///method to return list of all task
-    func getAllTasks(name: String){
+    func getAllTasks(){
         do {
             tasksData = try context.fetch(ToDoListTask.fetchRequest())
             DispatchQueue.main.async { [weak self] in
@@ -145,7 +147,7 @@ class ViewController: UIViewController {
         }
         catch {
             //error goes here
-            
+            print("Failed to reload table")
         }
         
     }
@@ -160,6 +162,7 @@ class ViewController: UIViewController {
         //save in the DB
         do {
             try context.save()
+            getAllTasks()
         }
         catch {
             //handle error here
