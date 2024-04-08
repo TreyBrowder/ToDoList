@@ -1,4 +1,4 @@
-Simple To Do List app created with Swift demonstrate knowledge of data CRUD opperations and data persistences utilizing Core Data framework
+Simple To Do List app created with Swift demonstrating knowledge of data CRUD opperations and data persistences utilizing Core Data framework
 
 <img width="1028" alt="ToDoSS1" src="https://github.com/TreyBrowder/ToDoList/assets/26770809/4100e21a-6afa-42b9-9ea4-d5c8b3fb9287">
 
